@@ -1,39 +1,34 @@
 pipeline {
-    agent any 
+    agent any
     stages {
-        stage('Build Docker Image') {
+        stage('Build') {
             steps {
-                echo "Building Docker Image for votingapp"
-                bat "docker build -t votingapp:v1 ."
+                echo "Build Docker Image"
+                bat "docker build -t mypythonflaskapp ."
             }
         }
-        stage('Docker Login') {
+        stage('Run') {
             steps {
-                // Consider using Jenkins credentials for security
-                bat 'docker login -u Sree_Manogna -p password'
-            }
-        }
-        stage('Push Docker Image to Docker Hub') {
-            steps {
-                echo "Pushing Docker Image to Docker Hub"
-                bat "docker tag votingapp:v1 22251a1257it258/assignment:v1"
-                bat "docker push 22251a1257it258/assignment:v1"
-            }
-        }
-        stage('Deploy to Kubernetes') {
-            steps {
-                echo "Deploying votingapp to Kubernetes"
-                bat 'kubectl apply -f deployment.yaml --validate=false'
-                bat 'kubectl apply -f service.yaml'
+                echo "Run application in Docker Container"
+                bat "docker rm -f mycontainer || exit 0"
+//forcibly removes the Docker container named mycontainer
+//If the container does not exist, this command will fail and return anerror
+//To avoid this error, exit 0, tells the shell to exit with a success status
+                bat "docker run -d -p 5000:5000 --name mycontainer mypythonflaskapp"
+//with -d runs the container in detached mode,
+//meaning it runs in the background, and you get your terminal back
+// immediately.
+//Without –d, app runs in the foreground, terminal shows container logs
+//and is “blocked” by the container process.
             }
         }
     }
     post {
         success {
-            echo 'Build, Docker push, and Kubernetes deployment successful! Artifact is ready!'
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Build or deployment failed.'
+            echo 'Pipeline failed. Please check the logs.'
         }
     }
 }
